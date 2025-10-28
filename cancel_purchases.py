@@ -26,8 +26,9 @@ options.add_argument('--disable-dev-shm-usage')
 options.set_preference('security.sandbox.content.level', 0)
 options.set_preference('toolkit.telemetry.reportingpolicy.firstRun', False)
 
+GECKO_DRIVER = os.getenv("GECKO_DRIVER_PATH", "/usr/local/bin/geckodriver")
 driver = webdriver.Firefox(
-    service=Service('YouPath'),
+    service=Service(GECKO_DRIVER),
     options=options
 )
 driver.set_window_size(1920, 1080)
@@ -77,8 +78,10 @@ def login_to_pixstorm(driver):
         print("Переключились на iframe")
 
         # Вводим логин и пароль
-        driver.execute_script("document.querySelector('#email').value = 'email';")
-        driver.execute_script("document.querySelector('#password').value = 'password';")
+        EMAIL = os.getenv("PIXSTORM_EMAIL", "your_email@example.com")
+        PASSWORD = os.getenv("PIXSTORM_PASSWORD", "your_password")
+        driver.execute_script(f"document.querySelector('#email').value = '{EMAIL}';")
+        driver.execute_script(f"document.querySelector('#password').value = '{PASSWORD}';")
 
         # Входим
         login_button = wait.until(
@@ -93,7 +96,7 @@ def login_to_pixstorm(driver):
         print("Галочка для двухфакторной аутентификации установлена!")
 
         # Генерация TOTP
-        secret = "BZ3D73HNRTGG66FM"
+        secret = os.getenv("PIXSTORM_TOTP_SECRET", "YOUR_2FA_SECRET_KEY")
         totp = pyotp.TOTP(secret)
         app_code = totp.now()
         print("Сгенерированный код приложения:", app_code)
@@ -156,7 +159,9 @@ def cancel_purchase_requests(attempts=5):
         print("Произошла ошибка:", e)
         if attempts <= 1:
             now = time.strftime("%Y%m%d_%H%M%S")
-            path = f"YouPath{now}.png"
+            crash_dir = os.getenv("CRASH_DIR", "./crashes")
+            os.makedirs(crash_dir, exist_ok=True)
+            path = os.path.join(crash_dir, f"cancel_purchases_{now}.png")
             driver.save_screenshot(path)
             print(f"Скриншот сохранен: {path}")
         click_login_and_account(driver)

@@ -16,13 +16,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-SCRIPTS_DIR = "YouPath"
-PURCHASES_SCRIPT = os.path.join(SCRIPTS_DIR, "cancel_purchases.exe")
-SALES_SCRIPT = os.path.join(SCRIPTS_DIR, "cancel_sales.exe")
+SCRIPTS_DIR = os.getenv("SCRIPTS_DIR", ".")
+PURCHASES_SCRIPT = os.path.join(SCRIPTS_DIR, "cancel_purchases.py")
+SALES_SCRIPT = os.path.join(SCRIPTS_DIR, "cancel_sales.py")
 
 
 def run_script(script_path: str):
-    """Запускает .exe с помощью python3."""
+    """Запускает Python скрипт."""
+    if not os.path.exists(script_path):
+        print(f"Ошибка: скрипт {script_path} не найден")
+        return
     subprocess.run(["python3", script_path], check=True)
 
 

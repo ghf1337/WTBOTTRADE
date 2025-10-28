@@ -4,10 +4,10 @@ import os
 import shutil
 from datetime import datetime
 
-first_program = ""
-second_program = ""
-third_program = ""
-delete_path = ""
+first_program = os.getenv("FIRST_PROGRAM", "./avt2.py")
+second_program = os.getenv("SECOND_PROGRAM", "./cancelb.py")
+third_program = os.getenv("THIRD_PROGRAM", "./prod.py")
+delete_path = os.getenv("DELETE_PATH", "")
 
 while True:
     print("=== Запуск отмены заявок ===")

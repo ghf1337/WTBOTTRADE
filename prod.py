@@ -22,7 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
-CACHE_DIR = 'YouPath'
+CACHE_DIR = os.getenv("CACHE_DIR", "./cache")
 
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
@@ -85,8 +85,10 @@ def login_to_pixstorm(driver) -> bool:
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '#email'))
         )
-        driver.execute_script("document.querySelector('#email').value = 'email';")
-        driver.execute_script("document.querySelector('#password').value = 'password';")
+        EMAIL = os.getenv("PIXSTORM_EMAIL", "your_email@example.com")
+        PASSWORD = os.getenv("PIXSTORM_PASSWORD", "your_password")
+        driver.execute_script(f"document.querySelector('#email').value = '{EMAIL}';")
+        driver.execute_script(f"document.querySelector('#password').value = '{PASSWORD}';")
 
         driver.switch_to.default_content()
         driver.switch_to.frame(iframe)
@@ -111,7 +113,7 @@ def login_to_pixstorm(driver) -> bool:
             print('Ошибка при установке галочки: ', e)
             # falls through to TOTP anyway
 
-        secret = 'BZ3D73HNRTGG66FM'
+        secret = os.getenv("PIXSTORM_TOTP_SECRET", "YOUR_2FA_SECRET_KEY")
         totp = pyotp.TOTP(secret)
         app_code = totp.now()
         print('Сгенерированный код приложения: ', app_code)
@@ -170,11 +172,12 @@ def create_driver():
     options.set_preference('security.sandbox.content.level', 0)
     options.set_preference('toolkit.telemetry.reportingpolicy.firstRun', False)
 
-    driver = webdriver.Firefox(service=Service('YouPath'), options=options)
+    GECKO_DRIVER = os.getenv("GECKO_DRIVER_PATH", "/usr/local/bin/geckodriver")
+    driver = webdriver.Firefox(service=Service(GECKO_DRIVER), options=options)
     return driver
 
 
-urls_file = 'YouPath/produrls.txt'
+urls_file = os.getenv("URLS_FILE", "./produrls.txt")
 
 # Load URLs
 try:
@@ -192,7 +195,9 @@ if not urls:
 def save_screenshot(driver, name):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f'{name}_{timestamp}.png'
-    path = os.path.join('YouPath/crashes', filename)
+    crash_dir = os.getenv("CRASH_DIR", "./crashes")
+    os.makedirs(crash_dir, exist_ok=True)
+    path = os.path.join(crash_dir, filename)
     driver.save_screenshot(path)
     print('Скриншот сохранён: ', path)
 
@@ -231,8 +236,9 @@ def worker(urls_chunk, thread_id):
         options.set_preference('security.sandbox.content.level', 0)
         options.set_preference('toolkit.telemetry.reportingpolicy.firstRun', False)
 
+        GECKO_DRIVER = os.getenv("GECKO_DRIVER_PATH", "/usr/local/bin/geckodriver")
         thread_vars['driver'] = webdriver.Firefox(
-            service=Service('YouPath/geckodriver.exe'),
+            service=Service(GECKO_DRIVER),
             options=options,
         )
         thread_vars['driver'].set_window_size(1920, 1080)
@@ -320,14 +326,17 @@ def buy_item(driver, buy_price, retry=True):
         time.sleep(0.5)
         print('Покупка успешно завершена!')
     except Exception as e:
-        print('Ошибка при продаже: ', e)
+        print('Ошибка при покупке: ', e)
         current_time = time.strftime('%Y%m%d_%H%M%S')
-        screenshot_path = f'C:/for_zhuk/wtbot/crashes/prodprodazha_{current_time}.png'
+        crash_dir = os.getenv("CRASH_DIR", "./crashes")
+        os.makedirs(crash_dir, exist_ok=True)
+        screenshot_path = os.path.join(crash_dir, f'buy_error_{current_time}.png')
         driver.save_screenshot(screenshot_path)
         print('Пробуем переавторизоваться и повторить...')
         click_login_and_account(driver)
         time.sleep(3)
-        sell_item(driver, buy_price, retry=True)  # as per bytecode flow, call sell_item on retry
+        if retry:
+            buy_item(driver, buy_price, retry=False)
 
 
 def sell_item(driver, sell_price, retry=True):
@@ -396,12 +405,15 @@ def sell_item(driver, sell_price, retry=True):
     except Exception as e:
         print('Ошибка при продаже: ', e)
         current_time = time.strftime('%Y%m%d_%H%M%S')
-        screenshot_path = f'YouPath/crashes/prodprodazha_{current_time}.png'
+        crash_dir = os.getenv("CRASH_DIR", "./crashes")
+        os.makedirs(crash_dir, exist_ok=True)
+        screenshot_path = os.path.join(crash_dir, f'sell_error_{current_time}.png')
         driver.save_screenshot(screenshot_path)
         print('Пробуем переавторизоваться и повторить...')
         click_login_and_account(driver)
         time.sleep(3)
-        sell_item(driver, sell_price, retry=True)
+        if retry:
+            sell_item(driver, sell_price, retry=False)
 
 
 def get_prices(driver, retry=True):
