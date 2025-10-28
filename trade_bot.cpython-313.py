@@ -1,5 +1,6 @@
 import json
 import time
+import os
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -29,9 +30,11 @@ class TradeBot:
         options.add_argument("--disable-notifications")
         options.add_argument("--start-maximized")
 
-        service = Service(
-            r"YouPath/chromedriver-win64/chromedriver.exe"
+        chromedriver_path = os.getenv(
+            "CHROMEDRIVER_PATH",
+            "/usr/local/bin/chromedriver"
         )
+        service = Service(chromedriver_path)
         driver = webdriver.Chrome(service=service, options=options)
         driver.get("https://trade.pixstorm.ru/orders")
         return driver
@@ -39,7 +42,7 @@ class TradeBot:
     # ----------------------------------------------------------------------
     def _load_cookies(self):
         """Загрузка cookies из файла и обновление страницы"""
-        cookies_path = r"YouPath/Desktop/wtbot/cookies.json"
+        cookies_path = os.getenv("COOKIES_PATH", "./cookies.json")
 
         try:
             with open(cookies_path, "r", encoding="utf-8") as file:

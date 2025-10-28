@@ -17,13 +17,13 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException,
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-GECKO = r"YouPath"
-CRASH_DIR = r"YouPath"
-URLS_FILE = r"YouPath"
+GECKO = os.getenv("GECKO_DRIVER_PATH", "/usr/local/bin/geckodriver")
+CRASH_DIR = os.getenv("CRASH_DIR", "./crashes")
+URLS_FILE = os.getenv("URLS_FILE", "./urls.txt")
 
-EMAIL = "email"
-PASSWORD = "password"
-TOTP_SECRET = "2FA Key"
+EMAIL = os.getenv("PIXSTORM_EMAIL", "your_email@example.com")
+PASSWORD = os.getenv("PIXSTORM_PASSWORD", "your_password")
+TOTP_SECRET = os.getenv("PIXSTORM_TOTP_SECRET", "YOUR_2FA_SECRET_KEY")
 BASE_URL = "https://trade.pixstorm.ru/"
 
 def create_driver(headless: bool = True) -> webdriver.Firefox:
